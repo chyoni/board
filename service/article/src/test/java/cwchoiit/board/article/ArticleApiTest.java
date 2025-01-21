@@ -2,6 +2,7 @@ package cwchoiit.board.article;
 
 import cwchoiit.board.article.service.request.ArticleCreateRequest;
 import cwchoiit.board.article.service.request.ArticleUpdateRequest;
+import cwchoiit.board.article.service.response.ArticlePageResponse;
 import cwchoiit.board.article.service.response.ArticleResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.client.HttpServerErrorException;
@@ -25,6 +26,26 @@ class ArticleApiTest {
     void readTest() {
         ArticleResponse response = read(138465139304538112L);
         assertThat(response).isNotNull();
+    }
+
+    @Test
+    void readAllTest() {
+        ArticlePageResponse response = restClient.get()
+                .uri("/v1/articles?boardId=1&page=1&pageSize=30")
+                .retrieve()
+                .body(ArticlePageResponse.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getArticles()).isNotEmpty();
+        assertThat(response.getArticleCount()).isEqualTo(301L);
+
+        ArticlePageResponse response2 = restClient.get()
+                .uri("/v1/articles?boardId=1&page=50000&pageSize=30")
+                .retrieve()
+                .body(ArticlePageResponse.class);
+
+        assertThat(response2).isNotNull();
+        assertThat(response2.getArticles()).isNotEmpty();
     }
 
     @Test
