@@ -17,6 +17,10 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
 
+    /**
+     * CommentService 는 내부에 CommentRepository 를 주입받아야 한다.
+     * {@code @InjectMocks}는 {@code Mock}으로 선언된 녀석을 자동으로 주입받는다.
+     */
     @InjectMocks
     CommentService commentService;
 
