@@ -28,4 +28,14 @@ class ArticleRepositoryTest {
         Long count = articleRepository.count(1L, 10000L);
         assertThat(count).isEqualTo(10000L);
     }
+
+    @Test
+    void findInfiniteTest() {
+        List<Article> articles = articleRepository.findAllInfinite(1L, 30L);
+        assertThat(articles).hasSize(30);
+
+        Long lastArticleId = articles.getLast().getArticleId();
+        List<Article> nextArticles = articleRepository.findAllInfinite(1L, 30L, lastArticleId);
+        assertThat(nextArticles).hasSize(30);
+    }
 }

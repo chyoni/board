@@ -61,4 +61,14 @@ public class ArticleService {
 
         return ArticlePageResponse.of(articles, articleCount);
     }
+
+    public List<ArticleResponse> readAllInfinite(Long boardId, Long pageSize, Long lastArticleId) {
+        List<Article> articles = lastArticleId == null ?
+                articleRepository.findAllInfinite(boardId, pageSize) :
+                articleRepository.findAllInfinite(boardId, pageSize, lastArticleId);
+
+        return articles.stream()
+                .map(ArticleResponse::from)
+                .toList();
+    }
 }

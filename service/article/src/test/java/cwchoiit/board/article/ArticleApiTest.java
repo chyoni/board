@@ -5,8 +5,11 @@ import cwchoiit.board.article.service.request.ArticleUpdateRequest;
 import cwchoiit.board.article.service.response.ArticlePageResponse;
 import cwchoiit.board.article.service.response.ArticleResponse;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,6 +49,27 @@ class ArticleApiTest {
 
         assertThat(response2).isNotNull();
         assertThat(response2.getArticles()).isNotEmpty();
+    }
+
+    @Test
+    void readAllInfiniteTest() {
+        List<ArticleResponse> response = restClient.get()
+                .uri("/v1/articles/infinite?boardId=1&pageSize=5")
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
+
+        assertThat(response).isNotNull();
+        assertThat(response.size()).isEqualTo(5L);
+
+        Long lastArticleId = response.getLast().getArticleId();
+        List<ArticleResponse> nextResponse = restClient.get()
+                .uri("/v1/articles/infinite?boardId=1&pageSize=5&lastArticleId={lastArticleId}", lastArticleId)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
+        assertThat(nextResponse).isNotNull();
+        assertThat(nextResponse.size()).isEqualTo(5L);
     }
 
     @Test
