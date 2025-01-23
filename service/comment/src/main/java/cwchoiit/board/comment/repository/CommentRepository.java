@@ -15,9 +15,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
      * 왜냐하면, 부모가 없는 커멘트는 본인 아이디가 곧 parentCommentId, 부모가 있는 커멘트는 parentCommentId 가 특정 부모 커멘트의 ID 이므로
      * ID가 1인 커멘트가 있고 ID가 2인 커멘트가 있을 때 ID가 2인 커멘트의 부모가 1일때, parentCommentId가 1인 결과 개수가 2로 계산이 가능하다.
      * 즉, articleId = 1, parentCommentId = 1, limit = 2 조건으로 아래 쿼리 결과가 2라면 자식이 있다라고 판단할 수 있다.
-     * @param articleId 게시글 ID
+     *
+     * @param articleId       게시글 ID
      * @param parentCommentId 부모 커멘트 ID
-     * @param limit limit
+     * @param limit           limit
      * @return 쿼리의 결과 개수
      */
     @Query(
@@ -48,8 +49,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             nativeQuery = true
     )
     List<Comment> findAll(@Param("articleId") Long articleId,
-                         @Param("offset") Long offset,
-                         @Param("limit") Long limit);
+                          @Param("offset") Long offset,
+                          @Param("limit") Long limit);
 
     @Query(
             value = "select count(*) from (" +
@@ -85,7 +86,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             nativeQuery = true
     )
     List<Comment> findAllInfinite(@Param("articleId") Long articleId,
-                                @Param("limit") Long limit,
-                                @Param("lastParentCommentId") Long lastParentCommentId,
-                                @Param("lastCommentId") Long lastCommentId);
+                                  @Param("limit") Long limit,
+                                  @Param("lastParentCommentId") Long lastParentCommentId,
+                                  @Param("lastCommentId") Long lastCommentId);
 }
