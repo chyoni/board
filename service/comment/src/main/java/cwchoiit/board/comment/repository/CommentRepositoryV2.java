@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CommentRepositoryV2 extends JpaRepository<CommentV2, Long> {
@@ -22,4 +23,58 @@ public interface CommentRepositoryV2 extends JpaRepository<CommentV2, Long> {
             nativeQuery = true
     )
     Optional<String> findDescendantsTopPath(@Param("articleId") Long articleId, @Param("parentPath") String parentPath);
+
+    // #########################
+    // 페이지 번호 방식
+    // #########################
+    @Query(
+            value = "select comment_v2.comment_id, comment_v2.content, comment_v2.path, comment_v2.article_id, comment_v2.writer_id, comment_v2.deleted, comment_v2.created_at " +
+                    "from (" +
+                    "   select comment_id " +
+                    "   from comment_v2 " +
+                    "   where article_id = :articleId " +
+                    "   order by path " +
+                    "   limit :limit offset :offset " +
+                    ") t left join comment_v2 on t.comment_id = comment_v2.comment_id",
+            nativeQuery = true
+    )
+    List<CommentV2> findAll(@Param("articleId") Long articleId, @Param("offset") Long offset, @Param("limit") Long limit);
+
+    @Query(
+            value = "select count(*) " +
+                    "from (" +
+                    "   select comment_id " +
+                    "   from comment_v2 " +
+                    "   where article_id = :articleId " +
+                    "   limit :limit " +
+                    ") t",
+            nativeQuery = true
+    )
+    Long count(@Param("articleId") Long articleId, @Param("limit") Long limit);
+
+    // #########################
+    // 무한 스크롤 방식
+    // #########################
+    @Query(
+            value = "select comment_v2.comment_id, comment_v2.content, comment_v2.path, comment_v2.article_id, comment_v2.writer_id, comment_v2.deleted, comment_v2.created_at " +
+                    "from comment_v2 " +
+                    "where article_id = :articleId " +
+                    "order by path " +
+                    "limit :limit ",
+            nativeQuery = true
+    )
+    List<CommentV2> findAllInfinite(@Param("articleId") Long articleId, @Param("limit") Long limit);
+
+    @Query(
+            value = "select comment_v2.comment_id, comment_v2.content, comment_v2.path, comment_v2.article_id, comment_v2.writer_id, comment_v2.deleted, comment_v2.created_at " +
+                    "from comment_v2 " +
+                    "where article_id = :articleId " +
+                    "and path > :lastPath " +
+                    "order by path " +
+                    "limit :limit ",
+            nativeQuery = true
+    )
+    List<CommentV2> findAllInfinite(@Param("articleId") Long articleId,
+                                    @Param("limit") Long limit,
+                                    @Param("lastPath") String lastPath);
 }

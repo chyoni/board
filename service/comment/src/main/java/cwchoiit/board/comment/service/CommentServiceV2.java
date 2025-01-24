@@ -4,13 +4,18 @@ import cwchoiit.board.comment.entity.CommentPath;
 import cwchoiit.board.comment.entity.CommentV2;
 import cwchoiit.board.comment.repository.CommentRepositoryV2;
 import cwchoiit.board.comment.service.request.CommentCreateRequestV2;
+import cwchoiit.board.comment.service.response.CommentPageResponse;
+import cwchoiit.board.comment.service.response.CommentPageResponseV2;
+import cwchoiit.board.comment.service.response.CommentResponse;
 import cwchoiit.board.comment.service.response.CommentResponseV2;
 import cwchoiit.board.common.snowflake.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +52,23 @@ public class CommentServiceV2 {
         return CommentResponseV2.from(commentRepository.findById(commentId).orElseThrow());
     }
 
+    public CommentPageResponseV2 readAll(Long articleId, Long page, Long pageSize) {
+        return CommentPageResponseV2.of(
+                commentRepository.findAll(articleId, (page - 1) * pageSize, pageSize).stream().map(CommentResponseV2::from).toList(),
+                commentRepository.count(articleId, PageLimitCalculator.calculatePageLimit(page, pageSize, 10L))
+        );
+    }
+
+    public List<CommentResponseV2> readAllInfinite(Long articleId, Long pageSize, String lastPath) {
+        List<CommentV2> comments = lastPath == null ?
+                commentRepository.findAllInfinite(articleId, pageSize) :
+                commentRepository.findAllInfinite(articleId, pageSize, lastPath);
+
+        return comments.stream()
+                .map(CommentResponseV2::from)
+                .toList();
+    }
+
     @Transactional
     public void delete(Long commentId) {
         commentRepository.findById(commentId)
@@ -61,6 +83,7 @@ public class CommentServiceV2 {
     }
 
     private boolean hasChildren(CommentV2 comment) {
+        // 자신의 path 를 parentPath 로 하여 descendantsTopPath 구했을 때, 존재하면 허위 댓글이 있는것이고 존재하지 않으면 하위 댓글이 없는것
         return commentRepository.findDescendantsTopPath(comment.getArticleId(), comment.getCommentPath().getPath())
                 .isPresent();
     }

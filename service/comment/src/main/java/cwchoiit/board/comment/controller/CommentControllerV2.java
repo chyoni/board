@@ -5,6 +5,7 @@ import cwchoiit.board.comment.service.CommentServiceV2;
 import cwchoiit.board.comment.service.request.CommentCreateRequest;
 import cwchoiit.board.comment.service.request.CommentCreateRequestV2;
 import cwchoiit.board.comment.service.response.CommentPageResponse;
+import cwchoiit.board.comment.service.response.CommentPageResponseV2;
 import cwchoiit.board.comment.service.response.CommentResponse;
 import cwchoiit.board.comment.service.response.CommentResponseV2;
 import lombok.RequiredArgsConstructor;
@@ -23,20 +24,19 @@ public class CommentControllerV2 {
         return commentService.read(commentId);
     }
 
-    /*@GetMapping
-    public CommentPageResponse readAll(@RequestParam Long articleId,
-                                       @RequestParam Long page,
-                                       @RequestParam Long pageSize) {
+    @GetMapping
+    public CommentPageResponseV2 readAll(@RequestParam Long articleId,
+                                         @RequestParam Long page,
+                                         @RequestParam Long pageSize) {
         return commentService.readAll(articleId, page, pageSize);
     }
 
     @GetMapping("/infinite")
     public List<CommentResponseV2> readAllInfinite(@RequestParam Long articleId,
-                                                 @RequestParam(required = false) Long lastParentCommentId,
-                                                 @RequestParam(required = false) Long lastCommentId,
+                                                 @RequestParam(required = false) String lastPath,
                                                  @RequestParam Long limit) {
-        return commentService.readAllInfinite(articleId, lastParentCommentId, lastCommentId, limit);
-    }*/
+        return commentService.readAllInfinite(articleId, limit, lastPath);
+    }
 
     @PostMapping
     public CommentResponseV2 create(@RequestBody CommentCreateRequestV2 request) {
