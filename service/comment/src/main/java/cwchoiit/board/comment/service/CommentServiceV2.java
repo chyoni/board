@@ -4,9 +4,7 @@ import cwchoiit.board.comment.entity.CommentPath;
 import cwchoiit.board.comment.entity.CommentV2;
 import cwchoiit.board.comment.repository.CommentRepositoryV2;
 import cwchoiit.board.comment.service.request.CommentCreateRequestV2;
-import cwchoiit.board.comment.service.response.CommentPageResponse;
 import cwchoiit.board.comment.service.response.CommentPageResponseV2;
-import cwchoiit.board.comment.service.response.CommentResponse;
 import cwchoiit.board.comment.service.response.CommentResponseV2;
 import cwchoiit.board.common.snowflake.Snowflake;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +26,7 @@ public class CommentServiceV2 {
 
         // 찾은 상위 댓글이 없는 경우 Root Path 로 Path 객체 생성하고, 있는 경우엔 상위 댓글의 Path 를 받아온다.
         CommentPath parentCommentPath =
-                parent == null ? CommentPath.create() : parent.getCommentPath();
+                parent == null ? CommentPath.createEmptyPath() : parent.getCommentPath();
 
         // descendantsTopPath 찾기
         String findDescendantsTopPath =

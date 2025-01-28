@@ -10,7 +10,7 @@ class CommentPathTest {
     @Test
     void createChildCommentTest() {
         // 00000 <- 생성
-        createChildCommentTest(CommentPath.create(), null, "00000");
+        createChildCommentTest(CommentPath.createEmptyPath(), null, "00000");
 
         // 00000
         //      00000 <- 생성
@@ -18,7 +18,7 @@ class CommentPathTest {
 
         // 00000
         // 00001 <- 생성
-        createChildCommentTest(CommentPath.create(), "00000", "00001");
+        createChildCommentTest(CommentPath.createEmptyPath(), "00000", "00001");
 
         // 0000z
         //      abcdz
@@ -30,6 +30,8 @@ class CommentPathTest {
 
     void createChildCommentTest(CommentPath commentPath, String descendantsTopPath, String expectedChildPath) {
         CommentPath childCommentPath = commentPath.createChildCommentPath(descendantsTopPath);
+
+
         assertThat(childCommentPath.getPath()).isEqualTo(expectedChildPath);
     }
 
@@ -42,7 +44,7 @@ class CommentPathTest {
 
     @Test
     void createChildCommentPathIfChunkOverflowTest() {
-        CommentPath commentPath = CommentPath.create();
+        CommentPath commentPath = CommentPath.createEmptyPath();
 
         assertThatThrownBy(() -> commentPath.createChildCommentPath("zzzzz"))
                 .isInstanceOf(IllegalStateException.class);

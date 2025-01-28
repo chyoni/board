@@ -36,10 +36,11 @@ public class CommentPath {
     }
 
     /**
-     * 상위 커멘트가 없는 최초 1 Depth 커멘트 생성
+     * Path 가 없는 CommentPath 객체 생성. 이 객체는 곧 Root 댓글이 될 것.
+     * path 가 ""인 상태는 Root 댓글이 아님. 곧 1 Depth 가 될 CommentPath 객체를 편리하게 만들기 위한 메서드.
      * @return {@link CommentPath}
      */
-    public static CommentPath create() {
+    public static CommentPath createEmptyPath() {
         CommentPath commentPath = new CommentPath();
         commentPath.path = "";
         return commentPath;
