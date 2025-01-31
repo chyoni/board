@@ -4,7 +4,6 @@ import cwchoiit.board.comment.service.request.CommentCreateRequestV2;
 import cwchoiit.board.comment.service.response.CommentPageResponseV2;
 import cwchoiit.board.comment.service.response.CommentResponseV2;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.ParameterizedTypeReference;
@@ -12,7 +11,7 @@ import org.springframework.web.client.RestClient;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @SpringBootTest
@@ -65,9 +64,34 @@ public class CommentApiV2Test {
         List<CommentResponseV2> response2 = restClient.get()
                 .uri("/v2/comments/infinite?articleId=1&limit=5&lastPath={lastPath}", lastPath)
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
+                .body(new ParameterizedTypeReference<>() {
+                });
 
         assertThat(response2).isNotNull();
         assertThat(response2).hasSize(5);
+    }
+
+    @Test
+    void countTest() {
+        CommentResponseV2 response = create(new CommentCreateRequestV2(2L, "my comment1", null, 1L));
+
+        Long count = restClient.get()
+                .uri("/v2/comments/articles/{articleId}/count", response.getArticleId())
+                .retrieve()
+                .body(Long.class);
+
+        assertThat(count).isEqualTo(1L);
+
+        restClient.delete()
+                .uri("/v2/comments/{commentId}", response.getCommentId())
+                .retrieve()
+                .toBodilessEntity();
+
+        Long recount = restClient.get()
+                .uri("/v2/comments/articles/{articleId}/count", response.getArticleId())
+                .retrieve()
+                .body(Long.class);
+
+        assertThat(recount).isEqualTo(0L);
     }
 }

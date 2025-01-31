@@ -1,7 +1,9 @@
 package cwchoiit.board.comment.service;
 
+import cwchoiit.board.comment.entity.ArticleCommentCount;
 import cwchoiit.board.comment.entity.CommentPath;
 import cwchoiit.board.comment.entity.CommentV2;
+import cwchoiit.board.comment.repository.ArticleCommentCountRepository;
 import cwchoiit.board.comment.repository.CommentRepositoryV2;
 import cwchoiit.board.comment.service.request.CommentCreateRequestV2;
 import cwchoiit.board.comment.service.response.CommentPageResponseV2;
@@ -19,6 +21,7 @@ import java.util.function.Predicate;
 public class CommentServiceV2 {
     private final Snowflake snowflake = new Snowflake();
     private final CommentRepositoryV2 commentRepository;
+    private final ArticleCommentCountRepository articleCommentCountRepository;
 
     @Transactional
     public CommentResponseV2 create(CommentCreateRequestV2 request) {
@@ -41,6 +44,11 @@ public class CommentServiceV2 {
                 parentCommentPath.createChildCommentPath(findDescendantsTopPath)); // 찾은 descendantsTopPath 를 기반으로 하위 댓글을 추가하거나, descendantsTopPath 가 없는 경우, Root 댓글로 생성
 
         CommentV2 savedNewComment = commentRepository.save(newComment);
+
+        int affectedRecord = articleCommentCountRepository.increase(request.getArticleId());
+        if (affectedRecord == 0) {
+            articleCommentCountRepository.save(ArticleCommentCount.init(request.getArticleId(), 1L));
+        }
 
         return CommentResponseV2.from(savedNewComment);
     }
@@ -87,6 +95,7 @@ public class CommentServiceV2 {
 
     private void deleteComment(CommentV2 comment) {
         commentRepository.delete(comment);
+        articleCommentCountRepository.decrease(comment.getArticleId());
         if (!comment.isRoot()) {
             commentRepository.findByPath(comment.getCommentPath().getParentPath())
                     .filter(CommentV2::getDeleted)
@@ -108,5 +117,11 @@ public class CommentServiceV2 {
         return commentRepository.findByPath(parentPath) // path 를 통해 상위 댓글을 찾음
                 .filter(Predicate.not(CommentV2::getDeleted)) // 상위 댓글이 삭제 마킹이 되지 않아야 하므로 필터링
                 .orElseThrow(); // 그게 아닌 경우 에러를 반환
+    }
+
+    public Long count(Long articleId) {
+        return articleCommentCountRepository.findById(articleId)
+                .map(ArticleCommentCount::getCommentCount)
+                .orElse(0L);
     }
 }
