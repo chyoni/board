@@ -88,6 +88,30 @@ class ArticleApiTest {
         assertThatThrownBy(() -> read(138465139304538112L)).isInstanceOf(HttpServerErrorException.class);
     }
 
+    @Test
+    void countTest() {
+        ArticleResponse response = create(new ArticleCreateRequest("hi", "my content", 1L, 2L));
+
+        Long count = restClient.get()
+                .uri("/v1/articles/boards/{boardId}/count", 2L)
+                .retrieve()
+                .body(Long.class);
+
+        assertThat(count).isEqualTo(1L);
+
+        restClient.delete()
+                .uri("/v1/articles/{articleId}", response.getArticleId())
+                .retrieve()
+                .toBodilessEntity();
+
+        Long reCount = restClient.get()
+                .uri("/v1/articles/boards/{boardId}/count", 2L)
+                .retrieve()
+                .body(Long.class);
+
+        assertThat(reCount).isEqualTo(0L);
+    }
+
     ArticleResponse create(ArticleCreateRequest request) {
         return restClient.post()
                 .uri("/v1/articles")

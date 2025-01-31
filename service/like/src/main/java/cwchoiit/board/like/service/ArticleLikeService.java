@@ -38,8 +38,8 @@ public class ArticleLikeService {
     public void likePessimisticLockByOne(Long articleId, Long userId) {
         articleLikeRepository.save(ArticleLike.create(snowflake.nextId(), articleId, userId));
 
-        int result = articleLikeCountRepository.increase(articleId);
-        if (result == 0) {
+        int affectedRecord = articleLikeCountRepository.increase(articleId);
+        if (affectedRecord == 0) {
             // 최초 요청시에는 레코드 자체가 없기 때문에 like_count 가 1인 레코드를 직접 집어넣으면 된다.
             // 트래픽이 순식간에 몰리는 경우에는, 이 코드가 여러 요청에서 동시에 실행될 수 있고 그 경우엔 데이터가 유실될 가능성도 있다.
             // 그래서, 게시글 생성 시점에 0으로 미리 초기화 해두는 방법도 있다. 여기서는 그렇게까지는 하지 않겠다.
