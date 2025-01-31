@@ -66,9 +66,9 @@ public class LikeApiTest {
     @Test
     void likePerformanceTest() throws InterruptedException {
         ExecutorService executorService = Executors.newFixedThreadPool(100);
-        likePerformanceTest(executorService, 4444L, "pessimistic-lock-1");
-        likePerformanceTest(executorService, 5555L, "pessimistic-lock-2");
-        likePerformanceTest(executorService, 6666L, "optimistic-lock");
+        likePerformanceTest(executorService, 11L, "pessimistic-lock-1");
+        likePerformanceTest(executorService, 22L, "pessimistic-lock-2");
+        likePerformanceTest(executorService, 55L, "optimistic-lock");
     }
 
     void likePerformanceTest(ExecutorService executorService, Long articleId, String lockType) throws InterruptedException {
@@ -81,8 +81,11 @@ public class LikeApiTest {
         for (int i = 0; i < 3000; i++) {
             long userId = i + 2;
             executorService.submit(() -> {
-                like(articleId, userId, lockType);
-                countDownLatch.countDown();
+                try {
+                    like(articleId, userId, lockType);
+                } finally {
+                    countDownLatch.countDown();
+                }
             });
         }
 
