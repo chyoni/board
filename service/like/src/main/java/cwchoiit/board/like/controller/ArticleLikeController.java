@@ -16,13 +16,44 @@ public class ArticleLikeController {
         return articleLikeService.read(articleId, userId);
     }
 
-    @PostMapping("/articles/{articleId}/users/{userId}")
-    public void like(@PathVariable Long articleId, @PathVariable Long userId) {
-        articleLikeService.like(articleId, userId);
+    @GetMapping("/articles/{articleId}/count")
+    public Long count(@PathVariable Long articleId) {
+        return articleLikeService.count(articleId);
     }
 
-    @DeleteMapping("/articles/{articleId}/users/{userId}")
-    public void unlike(@PathVariable Long articleId, @PathVariable Long userId) {
-        articleLikeService.unlike(articleId, userId);
+    // ##############################
+    // 비관적 락 1, 2번 방식
+    // ##############################
+    @PostMapping("/articles/{articleId}/users/{userId}/pessimistic-lock-1")
+    public void likePessimisticLockOne(@PathVariable Long articleId, @PathVariable Long userId) {
+        articleLikeService.likePessimisticLockByOne(articleId, userId);
+    }
+
+    @DeleteMapping("/articles/{articleId}/users/{userId}/pessimistic-lock-1")
+    public void unlikePessimisticLockOne(@PathVariable Long articleId, @PathVariable Long userId) {
+        articleLikeService.unlikePessimisticLockByOne(articleId, userId);
+    }
+
+    @PostMapping("/articles/{articleId}/users/{userId}/pessimistic-lock-2")
+    public void likePessimisticLockTwo(@PathVariable Long articleId, @PathVariable Long userId) {
+        articleLikeService.likePessimisticLockByTwo(articleId, userId);
+    }
+
+    @DeleteMapping("/articles/{articleId}/users/{userId}/pessimistic-lock-2")
+    public void unlikePessimisticLockTwo(@PathVariable Long articleId, @PathVariable Long userId) {
+        articleLikeService.unlikePessimisticLockByTwo(articleId, userId);
+    }
+
+    // ##############################
+    // 낙관적 락 방식
+    // ##############################
+    @PostMapping("/articles/{articleId}/users/{userId}/optimistic-lock")
+    public void likeOptimisticLock(@PathVariable Long articleId, @PathVariable Long userId) {
+        articleLikeService.likeOptimistic(articleId, userId);
+    }
+
+    @DeleteMapping("/articles/{articleId}/users/{userId}/optimistic-lock")
+    public void unlikeOptimisticLock(@PathVariable Long articleId, @PathVariable Long userId) {
+        articleLikeService.unlikeOptimistic(articleId, userId);
     }
 }
