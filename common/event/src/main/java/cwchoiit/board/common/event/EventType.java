@@ -30,10 +30,10 @@ public enum EventType {
         }
     }
 
-    private static class Topic {
-        private static final String BOARD_ARTICLE = "board-article";
-        private static final String BOARD_COMMENT = "board-comment";
-        private static final String BOARD_LIKE = "board-like";
-        private static final String BOARD_VIEW = "board-view";
+    public static class Topic {
+        public static final String BOARD_ARTICLE = "board-article";
+        public static final String BOARD_COMMENT = "board-comment";
+        public static final String BOARD_LIKE = "board-like";
+        public static final String BOARD_VIEW = "board-view";
     }
 }
