@@ -2,13 +2,11 @@ package cwchoiit.board.common.event;
 
 import cwchoiit.board.common.event.payload.ArticleCreatedEventPayload;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 class EventTest {

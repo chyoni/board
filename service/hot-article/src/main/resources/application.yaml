@@ -1,2 +1,26 @@
 server:
   port: 9004
+
+spring:
+  application:
+    name: board-hot-article-service
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: board-hot-article-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer # key 를 kafka 에 전달할 때, 직렬화할 수 있어야 하므로
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer # value 를 kafka 에 전달할 때, 직렬화할 수 있어야 하므로
+      enable-auto-commit: false
+
+
+endpoints:
+  board-article-service: # 인기글 서비스에서는 게시글을 조회할 때 게시글 원본 정보가 필요하므로 REST API 호출을 위한 endpoint
+    url: http://127.0.0.1:9000
+
+logging:
+  level:
+    cwchoiit.board.hotarticle: debug
