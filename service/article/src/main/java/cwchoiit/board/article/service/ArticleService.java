@@ -8,12 +8,19 @@ import cwchoiit.board.article.service.request.ArticleCreateRequest;
 import cwchoiit.board.article.service.request.ArticleUpdateRequest;
 import cwchoiit.board.article.service.response.ArticlePageResponse;
 import cwchoiit.board.article.service.response.ArticleResponse;
+import cwchoiit.board.common.event.EventType;
+import cwchoiit.board.common.event.payload.ArticleCreatedEventPayload;
+import cwchoiit.board.common.event.payload.ArticleDeletedEventPayload;
+import cwchoiit.board.common.event.payload.ArticleUpdatedEventPayload;
+import cwchoiit.board.common.outboxmessagerelay.OutboxEventPublisher;
 import cwchoiit.board.common.snowflake.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static cwchoiit.board.common.event.EventType.*;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +29,7 @@ public class ArticleService {
     private final Snowflake snowflake = new Snowflake();
     private final ArticleRepository articleRepository;
     private final BoardArticleCountRepository boardArticleCountRepository;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     @Transactional
     public ArticleResponse create(ArticleCreateRequest request) {
@@ -38,6 +46,21 @@ public class ArticleService {
             boardArticleCountRepository.save(BoardArticleCount.init(request.getBoardId(), 1L));
         }
 
+        // 게시글 생성 이벤트를 발생
+        outboxEventPublisher.publish(
+                ARTICLE_CREATED,
+                ArticleCreatedEventPayload.builder()
+                        .articleId(createdArticle.getArticleId())
+                        .title(createdArticle.getTitle())
+                        .content(createdArticle.getContent())
+                        .boardId(createdArticle.getBoardId())
+                        .writerId(createdArticle.getWriterId())
+                        .createdAt(createdArticle.getCreatedAt())
+                        .modifiedAt(createdArticle.getModifiedAt())
+                        .boardArticleCount(count(createdArticle.getBoardId()))
+                        .build(),
+                createdArticle.getBoardId()
+        );
         return ArticleResponse.from(createdArticle);
     }
 
@@ -45,6 +68,20 @@ public class ArticleService {
     public ArticleResponse update(Long articleId, ArticleUpdateRequest request) {
         Article article = articleRepository.findById(articleId).orElseThrow();
         article.update(request.getTitle(), request.getContent());
+        // 게시글 수정 이벤트 발행
+        outboxEventPublisher.publish(
+                ARTICLE_UPDATED,
+                ArticleUpdatedEventPayload.builder()
+                        .articleId(article.getArticleId())
+                        .title(article.getTitle())
+                        .content(article.getContent())
+                        .boardId(article.getBoardId())
+                        .writerId(article.getWriterId())
+                        .createdAt(article.getCreatedAt())
+                        .modifiedAt(article.getModifiedAt())
+                        .build(),
+                article.getBoardId()
+        );
         return ArticleResponse.from(article);
     }
 
@@ -57,6 +94,20 @@ public class ArticleService {
         Article article = articleRepository.findById(articleId).orElseThrow();
         articleRepository.delete(article);
         boardArticleCountRepository.decrease(article.getBoardId());
+        // 게시글 삭제 이벤트 발행
+        outboxEventPublisher.publish(
+                ARTICLE_DELETED,
+                ArticleDeletedEventPayload.builder()
+                        .articleId(article.getArticleId())
+                        .title(article.getTitle())
+                        .content(article.getContent())
+                        .boardId(article.getBoardId())
+                        .writerId(article.getWriterId())
+                        .createdAt(article.getCreatedAt())
+                        .modifiedAt(article.getModifiedAt())
+                        .build(),
+                article.getBoardId()
+        );
     }
 
     public ArticlePageResponse readAll(Long boardId, Long page, Long pageSize) {

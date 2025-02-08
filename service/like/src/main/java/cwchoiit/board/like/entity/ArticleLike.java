@@ -19,7 +19,7 @@ public class ArticleLike {
 
     @Id
     private Long articleLikeId;
-    private Long articleId;
+    private Long articleId; // Shard Key
     private Long userId;
     private LocalDateTime createdAt;
 

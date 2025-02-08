@@ -2,7 +2,11 @@ package cwchoiit.board.like;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+@EntityScan(basePackages = "cwchoiit.board")
+@EnableJpaRepositories(basePackages = "cwchoiit.board")
 @SpringBootApplication
 public class LikeApplication {
 

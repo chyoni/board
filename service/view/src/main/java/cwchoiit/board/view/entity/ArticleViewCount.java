@@ -15,7 +15,7 @@ import lombok.ToString;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ArticleViewCount {
     @Id
-    private Long articleId;
+    private Long articleId; // Shard Key
     private Long viewCount;
 
     public static ArticleViewCount init(Long articleId, Long viewCount) {

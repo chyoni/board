@@ -12,6 +12,12 @@ spring:
   jpa:
     open-in-view: false
     show-sql: false
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+  kafka:
+    bootstrap-servers: 127.0.0.1:9092
 logging:
   level:
     cwchoiit.board.article: debug

@@ -8,6 +8,9 @@ import cwchoiit.board.comment.repository.CommentRepositoryV2;
 import cwchoiit.board.comment.service.request.CommentCreateRequestV2;
 import cwchoiit.board.comment.service.response.CommentPageResponseV2;
 import cwchoiit.board.comment.service.response.CommentResponseV2;
+import cwchoiit.board.common.event.payload.CommentCreatedEventPayload;
+import cwchoiit.board.common.event.payload.CommentDeletedEventPayload;
+import cwchoiit.board.common.outboxmessagerelay.OutboxEventPublisher;
 import cwchoiit.board.common.snowflake.Snowflake;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,12 +19,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static cwchoiit.board.common.event.EventType.COMMENT_CREATED;
+import static cwchoiit.board.common.event.EventType.COMMENT_DELETED;
+
 @Service
 @RequiredArgsConstructor
 public class CommentServiceV2 {
     private final Snowflake snowflake = new Snowflake();
     private final CommentRepositoryV2 commentRepository;
     private final ArticleCommentCountRepository articleCommentCountRepository;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     @Transactional
     public CommentResponseV2 create(CommentCreateRequestV2 request) {
@@ -49,6 +56,21 @@ public class CommentServiceV2 {
         if (affectedRecord == 0) {
             articleCommentCountRepository.save(ArticleCommentCount.init(request.getArticleId(), 1L));
         }
+
+        // 댓글 생성 이벤트 발행
+        outboxEventPublisher.publish(
+                COMMENT_CREATED,
+                CommentCreatedEventPayload.builder()
+                        .commentId(newComment.getCommentId())
+                        .content(newComment.getContent())
+                        .articleId(newComment.getArticleId())
+                        .writerId(newComment.getWriterId())
+                        .markDeleted(newComment.getDeleted())
+                        .createdAt(newComment.getCreatedAt())
+                        .articleCommentCount(count(newComment.getArticleId()))
+                        .build(),
+                newComment.getArticleId()
+        );
 
         return CommentResponseV2.from(savedNewComment);
     }
@@ -84,6 +106,21 @@ public class CommentServiceV2 {
                     } else {
                         deleteComment(comment);
                     }
+
+                    // 댓글 삭제 이벤트 발행
+                    outboxEventPublisher.publish(
+                            COMMENT_DELETED,
+                            CommentDeletedEventPayload.builder()
+                                    .commentId(comment.getCommentId())
+                                    .content(comment.getContent())
+                                    .articleId(comment.getArticleId())
+                                    .writerId(comment.getWriterId())
+                                    .markDeleted(comment.getDeleted())
+                                    .createdAt(comment.getCreatedAt())
+                                    .articleCommentCount(count(comment.getArticleId()))
+                                    .build(),
+                            comment.getArticleId()
+                    );
                 });
     }
 
@@ -106,6 +143,7 @@ public class CommentServiceV2 {
 
     /**
      * 댓글 생성 요청으로부터 받은 parentPath 값을 통해 상위 댓글을 찾는다.
+     *
      * @param request 댓글 생성 요청 데이터
      * @return 상위 댓글이 있는 경우 {@link CommentV2}, 없는 경우 {@code null}
      */

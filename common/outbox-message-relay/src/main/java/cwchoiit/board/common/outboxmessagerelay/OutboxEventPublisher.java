@@ -25,6 +25,10 @@ public class OutboxEventPublisher {
                 Event.of(eventIdSnowflake.nextId(), eventType, payload).toJson(),
                 shardKey % MessageRelayConstants.SHARD_COUNT
         );
-        eventPublisher.publishEvent(OutboxEvent.of(outbox)); // Message Relay 가 이 이벤트를 받을 것
+
+        // Message Relay 가 이 이벤트를 받을 것, 스프링의 ApplicationEventPublisher 를 통해 이벤트를 발행
+        // 그러나, 이 이벤트를 발행한다고해서 곧바로 Message Relay 에 선언한 이벤트 리스너가 호출되는 게 아니라 시점에 맞게 호출됨
+        // 나의 경우, 커밋 바로 직전과 커밋 직후로 설정해 두었다. 
+        eventPublisher.publishEvent(OutboxEvent.of(outbox));
     }
 }

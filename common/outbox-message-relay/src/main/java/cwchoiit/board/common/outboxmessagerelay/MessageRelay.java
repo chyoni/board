@@ -27,15 +27,15 @@ public class MessageRelay {
     private final MessageRelayCoordinator messageRelayCoordinator;
     private final KafkaTemplate<String, String> messageRelayKafkaTemplate;
 
-    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT) // 트랜잭션이 커밋되기 전 이벤트를 받는다.
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT) // 트랜잭션이 커밋되기 직전 이벤트를 받는다.
     public void createOutbox(OutboxEvent event) {
         log.info("[createOutbox] outBoxEvent = {}", event);
-        // 트랜잭션이 커밋되기 전 Outbox 테이블에 레코드를 생성하기 위해
+        // 트랜잭션이 커밋되기 전 Outbox 테이블에 레코드를 생성하기 위해 (이벤트를 호출한 곳에서 사용한 트랜잭션 그대로를 사용하는 것)
         outboxRepository.save(event.getOutbox());
     }
 
     @Async("messageRelayPublishEventExecutor")
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋된 후 이벤트를 받는다.
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 트랜잭션이 커밋된 직후 이벤트를 받는다.
     public void publishEvent(OutboxEvent event) {
         // 커밋 후 애플리케이션으로부터 직접 Message Relay 는 이렇게 이벤트를 받을 수 있고
         // 해당 이벤트를 Kafka 로 비동기적으로 전송한다.
@@ -64,7 +64,7 @@ public class MessageRelay {
             scheduler = "messageRelayPublishPendingEventExecutor")
     public void publishPendingEvents() {
         AssignedShard assignedShard = messageRelayCoordinator.assignShards();
-        log.info("[publishPendingEvents] assignedShard = {}", assignedShard.getShards().size());
+        log.debug("[publishPendingEvents] assignedShard = {}", assignedShard.getShards().size());
         for (Long shard : assignedShard.getShards()) {
             List<Outbox> outboxes = outboxRepository.findAllByShardKeyAndCreatedAtLessThanEqualOrderByCreatedAtAsc(
                     shard,

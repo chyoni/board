@@ -1,5 +1,9 @@
 package cwchoiit.board.like.service;
 
+import cwchoiit.board.common.event.EventType;
+import cwchoiit.board.common.event.payload.ArticleDislikedEventPayload;
+import cwchoiit.board.common.event.payload.ArticleLikedEventPayload;
+import cwchoiit.board.common.outboxmessagerelay.OutboxEventPublisher;
 import cwchoiit.board.common.snowflake.Snowflake;
 import cwchoiit.board.like.entity.ArticleLike;
 import cwchoiit.board.like.entity.ArticleLikeCount;
@@ -11,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static cwchoiit.board.common.event.EventType.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -18,6 +24,7 @@ public class ArticleLikeService {
     private final Snowflake snowflake = new Snowflake();
     private final ArticleLikeRepository articleLikeRepository;
     private final ArticleLikeCountRepository articleLikeCountRepository;
+    private final OutboxEventPublisher outboxEventPublisher;
 
     public ArticleLikeResponse read(Long articleId, Long userId) {
         return articleLikeRepository.findByArticleIdAndUserId(articleId, userId)
@@ -36,7 +43,7 @@ public class ArticleLikeService {
      */
     @Transactional
     public void likePessimisticLockByOne(Long articleId, Long userId) {
-        articleLikeRepository.save(ArticleLike.create(snowflake.nextId(), articleId, userId));
+        ArticleLike articleLike = articleLikeRepository.save(ArticleLike.create(snowflake.nextId(), articleId, userId));
 
         int affectedRecord = articleLikeCountRepository.increase(articleId);
         if (affectedRecord == 0) {
@@ -46,6 +53,19 @@ public class ArticleLikeService {
             // 다른 방법으로는 이 코드 부분만 synchronized 블럭이나 등등의 방법을 사용할 수도 있겠다.
             articleLikeCountRepository.save(ArticleLikeCount.init(articleId, 1L));
         }
+
+        // 게시글 좋아요 이벤트 발행
+        outboxEventPublisher.publish(
+                ARTICLE_LIKED,
+                ArticleLikedEventPayload.builder()
+                        .articleLikeId(articleLike.getArticleLikeId())
+                        .articleId(articleLike.getArticleId())
+                        .userId(articleLike.getUserId())
+                        .createdAt(articleLike.getCreatedAt())
+                        .articleLikeCount(count(articleLike.getArticleId()))
+                        .build(),
+                articleLike.getArticleId()
+        );
     }
 
     /**
@@ -59,6 +79,19 @@ public class ArticleLikeService {
                 .ifPresent(articleLike -> {
                     articleLikeRepository.delete(articleLike);
                     articleLikeCountRepository.decrease(articleId);
+                    
+                    // 게시글 좋아요 해제 이벤트 발행
+                    outboxEventPublisher.publish(
+                            ARTICLE_DISLIKED,
+                            ArticleDislikedEventPayload.builder()
+                                    .articleLikeId(articleLike.getArticleLikeId())
+                                    .articleId(articleLike.getArticleId())
+                                    .userId(articleLike.getUserId())
+                                    .createdAt(articleLike.getCreatedAt())
+                                    .articleLikeCount(count(articleLike.getArticleId()))
+                                    .build(),
+                            articleLike.getArticleId()
+                    );
                 });
     }
 
@@ -69,7 +102,7 @@ public class ArticleLikeService {
      */
     @Transactional
     public void likePessimisticLockByTwo(Long articleId, Long userId) {
-        articleLikeRepository.save(ArticleLike.create(snowflake.nextId(), articleId, userId));
+        ArticleLike articleLike = articleLikeRepository.save(ArticleLike.create(snowflake.nextId(), articleId, userId));
 
         // select ... for update
         ArticleLikeCount articleLikeCount = articleLikeCountRepository.findLockedByArticleId(articleId)
@@ -82,6 +115,19 @@ public class ArticleLikeService {
         // 이 객체는 영속성 컨텍스트에 영속된 상태가 아니게 된다. 그 경우에는 save()를 명시적으로 호출해줘야 하므로 아래 save()를 호출
         // 레코드를 찾아서 영속시킨 경우엔 변경감지가 일어나고, 변경감지의 경우엔 약간 애매해지긴 하지만 어쩔수 없다.
         articleLikeCountRepository.save(articleLikeCount);
+
+        // 게시글 좋아요 이벤트 발행
+        outboxEventPublisher.publish(
+                ARTICLE_LIKED,
+                ArticleLikedEventPayload.builder()
+                        .articleLikeId(articleLike.getArticleLikeId())
+                        .articleId(articleLike.getArticleId())
+                        .userId(articleLike.getUserId())
+                        .createdAt(articleLike.getCreatedAt())
+                        .articleLikeCount(articleLikeCount.getLikeCount())
+                        .build(),
+                articleLike.getArticleId()
+        );
     }
 
     /**
@@ -96,6 +142,19 @@ public class ArticleLikeService {
                     articleLikeRepository.delete(articleLike);
                     ArticleLikeCount articleLikeCount = articleLikeCountRepository.findLockedByArticleId(articleId).orElseThrow();
                     articleLikeCount.decrease();
+
+                    // 게시글 좋아요 해제 이벤트 발행
+                    outboxEventPublisher.publish(
+                            ARTICLE_DISLIKED,
+                            ArticleDislikedEventPayload.builder()
+                                    .articleLikeId(articleLike.getArticleLikeId())
+                                    .articleId(articleLike.getArticleId())
+                                    .userId(articleLike.getUserId())
+                                    .createdAt(articleLike.getCreatedAt())
+                                    .articleLikeCount(articleLikeCount.getLikeCount())
+                                    .build(),
+                            articleLike.getArticleId()
+                    );
                 });
     }
 
@@ -110,7 +169,7 @@ public class ArticleLikeService {
      */
     @Transactional
     public void likeOptimistic(Long articleId, Long userId) {
-        articleLikeRepository.save(ArticleLike.create(snowflake.nextId(), articleId, userId));
+        ArticleLike articleLike = articleLikeRepository.save(ArticleLike.create(snowflake.nextId(), articleId, userId));
 
         ArticleLikeCount articleLikeCount = articleLikeCountRepository.findById(articleId)
                 .orElseGet(() -> ArticleLikeCount.init(articleId, 0L));
@@ -119,6 +178,19 @@ public class ArticleLikeService {
         // 이 객체는 영속성 컨텍스트에 영속된 상태가 아니게 된다. 그 경우에는 save()를 명시적으로 호출해줘야 하므로 아래 save()를 호출
         // 레코드를 찾아서 영속시킨 경우엔 변경감지가 일어나고, 변경감지의 경우엔 약간 애매해지긴 하지만 어쩔수 없다.
         articleLikeCountRepository.save(articleLikeCount);
+
+        // 게시글 좋아요 이벤트 발행
+        outboxEventPublisher.publish(
+                ARTICLE_LIKED,
+                ArticleLikedEventPayload.builder()
+                        .articleLikeId(articleLike.getArticleLikeId())
+                        .articleId(articleLike.getArticleId())
+                        .userId(articleLike.getUserId())
+                        .createdAt(articleLike.getCreatedAt())
+                        .articleLikeCount(articleLikeCount.getLikeCount())
+                        .build(),
+                articleLike.getArticleId()
+        );
     }
 
     /**
@@ -133,6 +205,19 @@ public class ArticleLikeService {
                     articleLikeRepository.delete(articleLike);
                     ArticleLikeCount articleLikeCount = articleLikeCountRepository.findById(articleId).orElseThrow();
                     articleLikeCount.decrease();
+
+                    // 게시글 좋아요 해제 이벤트 발행
+                    outboxEventPublisher.publish(
+                            ARTICLE_DISLIKED,
+                            ArticleDislikedEventPayload.builder()
+                                    .articleLikeId(articleLike.getArticleLikeId())
+                                    .articleId(articleLike.getArticleId())
+                                    .userId(articleLike.getUserId())
+                                    .createdAt(articleLike.getCreatedAt())
+                                    .articleLikeCount(articleLikeCount.getLikeCount())
+                                    .build(),
+                            articleLike.getArticleId()
+                    );
                 });
     }
 
