@@ -40,6 +40,7 @@ public class HotArticleListRepository {
                     Long score,
                     Long limit,
                     Duration timeToLive) {
+        log.debug("[add] add to hot article list, key : {}", time);
         redisTemplate.executePipelined((RedisCallback<?>) action -> { // executePipelined 을 사용하면, Redis 쪽으로 네트워크 통신을 한번만 하고 그 안에서 여러개의 연산을 수행할 수 있게 해준다.
             StringRedisConnection conn = (StringRedisConnection) action;
             String key = generateKey(time);

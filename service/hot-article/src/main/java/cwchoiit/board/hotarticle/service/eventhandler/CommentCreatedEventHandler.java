@@ -1,14 +1,13 @@
 package cwchoiit.board.hotarticle.service.eventhandler;
 
 import cwchoiit.board.common.event.Event;
-import cwchoiit.board.common.event.EventType;
 import cwchoiit.board.common.event.payload.CommentCreatedEventPayload;
 import cwchoiit.board.hotarticle.repository.ArticleCommentCountRepository;
 import cwchoiit.board.hotarticle.utils.TimeCalculatorUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import static cwchoiit.board.common.event.EventType.*;
+import static cwchoiit.board.common.event.EventType.COMMENT_CREATED;
 
 @Component
 @RequiredArgsConstructor

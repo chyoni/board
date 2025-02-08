@@ -21,15 +21,17 @@ import static cwchoiit.board.common.event.EventType.ARTICLE_DELETED;
 @RequiredArgsConstructor
 public class HotArticleService {
     private final ArticleClient articleClient;
-    private final List<EventHandler<EventPayload>> eventHandlers;
+    private final List<EventHandler> eventHandlers;
     private final HotArticleScoreUpdater hotArticleScoreUpdater;
     private final HotArticleListRepository hotArticleListRepository;
 
     public void handleEvent(Event<EventPayload> event) {
-        EventHandler<EventPayload> eventHandler = findEventHandler(event);
+        EventHandler eventHandler = findEventHandler(event);
         if (eventHandler == null) {
             return;
         }
+
+        log.debug("Handling event: {}, eventHandler: {}", event.getType(), eventHandler.getClass().getSimpleName());
 
         if (isArticleCreatedOrDeleted(event)) {
             eventHandler.handle(event); // 게시글 생성 및 삭제 이벤트는 점수를 반영하지 않음
@@ -46,7 +48,7 @@ public class HotArticleService {
                 .toList();
     }
 
-    private EventHandler<EventPayload> findEventHandler(Event<EventPayload> event) {
+    private EventHandler findEventHandler(Event<EventPayload> event) {
         return eventHandlers.stream()
                 .filter(eventHandler -> eventHandler.supports(event))
                 .findAny()
