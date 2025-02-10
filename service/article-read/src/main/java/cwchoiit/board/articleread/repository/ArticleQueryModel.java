@@ -72,11 +72,11 @@ public class ArticleQueryModel {
     }
 
     public void updateBy(ArticleLikedEventPayload payload) {
-        articleCommentCount = payload.getArticleLikeCount();
+        articleLikeCount = payload.getArticleLikeCount();
     }
 
     public void updateBy(ArticleDislikedEventPayload payload) {
-        articleCommentCount = payload.getArticleLikeCount();
+        articleLikeCount = payload.getArticleLikeCount();
     }
 
     public void updateBy(ArticleUpdatedEventPayload payload) {
