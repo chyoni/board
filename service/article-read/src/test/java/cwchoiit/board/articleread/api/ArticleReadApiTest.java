@@ -3,14 +3,13 @@ package cwchoiit.board.articleread.api;
 import cwchoiit.board.articleread.service.response.ArticleReadPageResponse;
 import cwchoiit.board.articleread.service.response.ArticleReadResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 public class ArticleReadApiTest {
@@ -54,7 +53,8 @@ public class ArticleReadApiTest {
         List<ArticleReadResponse> cacheData = articleReadRestClient.get()
                 .uri("/v1/articles/infinite?boardId={boardId}&pageSize={pageSize}", 1L, 5L)
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
+                .body(new ParameterizedTypeReference<>() {
+                });
 
         assertThat(cacheData).isNotNull();
         assertThat(cacheData.size()).isEqualTo(5);
@@ -62,7 +62,8 @@ public class ArticleReadApiTest {
         List<ArticleReadResponse> originData = articleRestClient.get()
                 .uri("/v1/articles/infinite?boardId={boardId}&pageSize={pageSize}", 1L, 5L)
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
+                .body(new ParameterizedTypeReference<>() {
+                });
 
         assertThat(originData).isNotNull();
         assertThat(originData.size()).isEqualTo(5);
@@ -78,7 +79,8 @@ public class ArticleReadApiTest {
         List<ArticleReadResponse> cacheDataWithLastArticleId = articleReadRestClient.get()
                 .uri("/v1/articles/infinite?boardId={boardId}&pageSize={pageSize}&lastArticleId={lastArticleId}", 1L, 5L, lastArticleIdByCache)
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
+                .body(new ParameterizedTypeReference<>() {
+                });
 
         assertThat(cacheDataWithLastArticleId).isNotNull();
         assertThat(cacheDataWithLastArticleId.size()).isEqualTo(5);
@@ -86,7 +88,8 @@ public class ArticleReadApiTest {
         List<ArticleReadResponse> originDataWithLastArticleId = articleRestClient.get()
                 .uri("/v1/articles/infinite?boardId={boardId}&pageSize={pageSize}&lastArticleId={lastArticleId}", 1L, 5L, lastArticleIdByOrigin)
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
+                .body(new ParameterizedTypeReference<>() {
+                });
 
         assertThat(originDataWithLastArticleId).isNotNull();
         assertThat(originDataWithLastArticleId.size()).isEqualTo(5);

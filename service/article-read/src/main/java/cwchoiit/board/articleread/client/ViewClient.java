@@ -30,7 +30,7 @@ public class ViewClient {
      * @param articleId articleId
      * @return view count
      */
-    @Cacheable(key = "#articleId", value = "articleViewCount") // articleViewCount::{articleId}::{조회수값}
+    @Cacheable(key = "#articleId", value = "articleViewCount") // articleViewCount::{articleId} / {조회수값}
     public Long count(Long articleId) {
         log.info("[count] articleId: {}", articleId);
         try {
