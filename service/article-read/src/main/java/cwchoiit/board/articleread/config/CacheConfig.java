@@ -10,6 +10,10 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import java.time.Duration;
 import java.util.Map;
 
+/**
+ * {@code @Cacheable} 애노테이션으로 캐싱을 사용하기 위해 만든 설정 클래스
+ * 지금은, 분산락 개념을 도입한 캐시 최적화를 사용하고 있어서 이 설정과 {@code @Cacheable} 사용하지 않음
+ */
 @Configuration
 @EnableCaching
 public class CacheConfig {
