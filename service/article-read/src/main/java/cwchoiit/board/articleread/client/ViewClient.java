@@ -1,5 +1,6 @@
 package cwchoiit.board.articleread.client;
 
+import cwchoiit.board.articleread.cache.OptimizedCacheable;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,8 @@ public class ViewClient {
      * @param articleId articleId
      * @return view count
      */
-    @Cacheable(key = "#articleId", value = "articleViewCount") // articleViewCount::{articleId} / {조회수값}
+    // @Cacheable(key = "#articleId", value = "articleViewCount") // articleViewCount::{articleId} / {조회수값}
+    @OptimizedCacheable(type = "articleViewCount", timeToLiveSeconds = 1)
     public Long count(Long articleId) {
         log.info("[count] articleId: {}", articleId);
         try {
